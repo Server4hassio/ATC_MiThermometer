@@ -37,7 +37,7 @@ enum {
 	ADV_TYPE_BTHOME // (default)
 } ADV_TYPE_ENUM;
 
-#define ADV_TYPE_DEFAULT	ADV_TYPE_CUSTOM
+#define ADV_TYPE_DEFAULT	ADV_TYPE_PVVX
 
 // cfg.flg
 #define MASK_FLG_LP_MSR	   0x80 // lp_measures
