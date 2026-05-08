@@ -1,0 +1,55 @@
+name: Build LYWSD03MMC firmware
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl xz-utils git dpkg-dev wget \
+            libssl-dev libncurses5 libncursesw5 \
+            build-essential python3
+
+      - name: Cache TC32 toolchain
+        id: cache-tc32
+        uses: actions/cache@v4
+        with:
+          path: SDK/tools/linux/tc32
+          key: tc32-gcc-v2.0
+
+      - name: Download TC32 toolchain (if not cached)
+        if: steps.cache-tc32.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p SDK/tools/linux
+          # Primary mirror; fall back to a known mirror if the first fails
+          wget -O SDK/tools/linux/tc32.tar.bz2 \
+            http://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tc32_gcc_v2.0.tar.bz2 \
+            || wget -O SDK/tools/linux/tc32.tar.bz2 \
+            https://github.com/Ai-Thinker-Open/Telink_825X_SDK/raw/master/tools/tc32_gcc_v2.0.tar.bz2
+          tar -xjf SDK/tools/linux/tc32.tar.bz2 -C SDK/tools/linux/
+          rm SDK/tools/linux/tc32.tar.bz2
+
+      - name: Build ATC_v58 (LYWSD03MMC)
+        run: |
+          export PATH="$PWD/SDK/tools/linux/tc32/bin:$PATH"
+          make -s -j PROJECT_NAME=ATC_v58 \
+            POJECT_DEF="-DDEVICE_TYPE=DEVICE_LYWSD03MMC"
+          ls -lh ATC_v58.bin
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ATC_v58-LYWSD03MMC
+          path: ATC_v58.bin
+          if-no-files-found: error
