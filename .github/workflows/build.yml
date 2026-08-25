@@ -47,6 +47,9 @@ jobs:
             POJECT_DEF="-DDEVICE_TYPE=DEVICE_LYWSD03MMC"
           ls -lh ATC_v58.bin
 
+      - name: Clean out/ between builds
+        run: rm -rf out
+
       - name: Build CGDK2_v58 (Qingping CGDK2)
         run: |
           export PATH="$PWD/SDK/tools/linux/tc32/bin:$PATH"
