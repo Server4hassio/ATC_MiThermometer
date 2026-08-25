@@ -1,4 +1,4 @@
-name: Build LYWSD03MMC firmware
+name: Build custom firmware
 
 on:
   push:
@@ -47,9 +47,23 @@ jobs:
             POJECT_DEF="-DDEVICE_TYPE=DEVICE_LYWSD03MMC"
           ls -lh ATC_v58.bin
 
-      - name: Upload firmware artifact
+      - name: Build CGDK2_v58 (Qingping CGDK2)
+        run: |
+          export PATH="$PWD/SDK/tools/linux/tc32/bin:$PATH"
+          make -s -j PROJECT_NAME=CGDK2_v58 \
+            POJECT_DEF="-DDEVICE_TYPE=DEVICE_CGDK2"
+          ls -lh CGDK2_v58.bin
+
+      - name: Upload LYWSD03MMC firmware
         uses: actions/upload-artifact@v4
         with:
           name: ATC_v58-LYWSD03MMC
           path: ATC_v58.bin
+          if-no-files-found: error
+
+      - name: Upload CGDK2 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: CGDK2_v58-Qingping
+          path: CGDK2_v58.bin
           if-no-files-found: error
