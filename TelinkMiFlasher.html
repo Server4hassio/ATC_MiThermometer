@@ -2232,6 +2232,14 @@ function miAuthorization() {
 //					}
 				});
 			});
+		}).then(() => {
+			// Mi auth is fully set up here — log in now instead of guessing a
+			// delay, since the reconnect path can run well past any timer.
+			if(autoStep == 2 && !is_logged_in) {
+				restoreCreds();
+				addLog("Auto Flash 2/2: logging in");
+				keyMiLogin();
+			}
 		}).catch(handleError);
 }
 function startRegister() {
@@ -3043,14 +3051,16 @@ function autoFlashReconnect() {
 	doConnect();
 	// Service discovery and Mi auth setup run as promise chains with no
 	// completion hook we can attach to, so give them time before logging in.
+	// Fallback only: miAuthorization() normally triggers the login as soon as
+	// it finishes. This catches a reconnect that never got that far.
 	setTimeout(function() {
-		if(autoStep != 2) return;
+		if(autoStep != 2 || is_logged_in) return;
 		if(!miConnected) { autoFlashAbort("device did not come back"); return; }
-		if(is_logged_in) return;
 		if($("mi_token")) $("mi_token").value = autoCreds.token;
 		if($("mi_bind_key")) $("mi_bind_key").value = autoCreds.bindkey;
+		addLog("Auto Flash 2/2: logging in (fallback)");
 		keyMiLogin();
-	}, 5000);
+	}, 20000);
 }
 
 function autoFlashAbort(why) {
