@@ -118,7 +118,9 @@ function handleError(error) {
 		if (connectTrys < 5) {
 			connectTrys++;
 			addLog("Reconnect " + connectTrys + " from " + 5);
-			doConnect();
+			// Retrying immediately hits the same "GATT operation failed";
+			// the adapter needs a moment to drop the half-open link first.
+			setTimeout(doConnect, 1000);
 		} else {
 			addLog("Something went wrong, too many reconnects");
 			connectTrys = 0;
@@ -2271,9 +2273,10 @@ function doConnect() {
 		// is the very first request after connect. Fetching one known service
 		// settles the link first; atc1441's flasher connects in this order and
 		// works on hardware where enumerating everything up front does not.
-		return gattServer.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912')
+		// Use the local `server`: a disconnect mid-chain nulls gattServer.
+		return server.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912')
 			.catch(() => null)
-			.then(() => gattServer.getPrimaryServices()).then(services => {
+			.then(() => server.getPrimaryServices()).then(services => {
 		miEnabled = false;
 		otaEnabled = false;
 		customEnabled = false;
@@ -2494,6 +2497,7 @@ function setStatus(status) {
 function updateFail(err) {
 	addLog("Update error: " + err);
 	setStatus("Update error: " + err);
+	autoFlashAbort(err);
 }
 
 function decimalToHex(d, padding) {
