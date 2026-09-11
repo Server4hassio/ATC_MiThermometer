@@ -872,7 +872,7 @@ function CustomQingpingParse(value) {
 
 function CGPR1_Action() {
 	addLog("Detected Qingping CGPR1 device");
-	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br>Press and hold the button on the device the device for 2 seconds until the LED starts flashing, and then press the "Connect" and "Activate" buttons on the TeLinkMiFlasher.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="skipActivation();">Skip Activation</button>	 <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br><button type="button" onclick="sendCmdClear();">Clear all settings and reset device (into Qingping mode)</button><br><br>MTimer: <input type="text" id="mtimer" value="?"> ms <button type="button" onclick="getMTimer();">Get</button> <button type="button" onclick="setMTimer();">Set</button><br>';
+	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br>Press and hold the button on the device the device for 2 seconds until the LED starts flashing, and then press the "Connect" and "Activate" buttons on the TeLinkMiFlasher.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="skipActivation();">Skip Activation</button>	 <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br><button type="button" onclick="sendCmdClear();">Clear all settings and reset device (into Qingping mode)</button><br><br>MTimer: <input type="text" id="mtimer" value="?"> ms <button type="button" onclick="getMTimer();">Get</button> <button type="button" onclick="setMTimer();">Set</button><br>';
 	gattServer.getPrimaryService("22210000-554a-4546-5542-46534450464d")
 		.then(service => {
 			addClog("Found Custom service");
@@ -932,7 +932,7 @@ function CGDK2_Action() {
 	cus017Chr = null;
 	addLog("Detected Qingping CGDK2 device");
 	//if(devinfo.frstr && devinfo.frstr.substr(0,5) == "2.2.3") addAlog("Warning! The device with this Firmware Revision is not supported!");
-	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button>';
+	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button>';
 	gattServer.getPrimaryService("22210000-554a-4546-5542-46534450464d")
 		.then(service => {
 			addClog("Found Custom service");
@@ -951,7 +951,7 @@ function CGDK2_Action() {
 function CGG1_Action(model) {
 	cus017Chr = null;
 	addLog("Detected Qingping CGG1 device " + model);
-	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br>Press and hold the button on the back of CGG1-M for 2 seconds until the Bluetooth icon starts blinking on the e-ink display, and then click the "Connect" and "Do Activation" buttons.<br><button type="button" onclick="sendRegister();">Do Activation</button>	<button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
+	$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br>Press and hold the button on the back of CGG1-M for 2 seconds until the Bluetooth icon starts blinking on the e-ink display, and then click the "Connect" and "Do Activation" buttons.<br><button type="button" onclick="sendRegister();">Do Activation</button>	<button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
 	gattServer.getPrimaryService("22210000-554a-4546-5542-46534450464d")
 		.then(service => {
 			addClog("Found Custom service");
@@ -2416,7 +2416,7 @@ function doConnect() {
 					if (bluetoothDevice.name.substr(0,10) == "LYWSD02MMC") {
 					    hwver_id = 49;
 					    //fwmaxsize = MAX_BLE_OTA_SIZE;
-						$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
+						$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
 						miAction();
 					}
 				}
@@ -2454,18 +2454,18 @@ function doConnect() {
 				fwmaxsize = MAX_EXT_OTA_SIZE;
 			}
 			if ((devName.substr(0,10) == "LYWSD03MMC") && (fwStr.substr(0,10) == "2.1.1_0159")) {
-			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware LYWSD03MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0159 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><button type="button" onclick="startAutoFlash();">Auto Flash (signed + custom)</button><br><br>';
+			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware LYWSD03MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0159 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><button type="button" onclick="startAutoFlash();">Auto Flash (signed + custom)</button><br><br>';
 			    fwmaxsize = MAX_BLE_OTA_SIZE;
 				fsignota = "sign_2.1.1_0159c.bin";
 				miAction();
 			} else if ((devName.substr(0,10) == "MJWSD06MMC") && (fwStr.substr(0,4) == "0009")) {
-			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware MJWSD06MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0009 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/636" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
+			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware MJWSD06MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0009 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/636" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
 			    fwmaxsize = MAX_EXT_OTA_SIZE;
 			    hwver_id = 13;
 				//fsignota = "sign_mj6_2.1.1a.bin";
 				miAction();
 			} else {
-				$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
+				$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
 				miAction();
 			}
 		} else if(bthomeEnabled) {
@@ -2508,7 +2508,7 @@ function doConnect() {
 			miEnabled = true;
 			miAuthorization();	//	miConnected
 			$("ldfile").hidden = false;
-			$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="skipActivation();">Skip Activation</button>	 <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
+			$("custcfg").innerHTML = '<hr>When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.<br><button type="button" onclick="sendRegister();">Do Activation</button> <button type="button" onclick="skipActivation();">Skip Activation</button>	 <button type="button" onclick="keyMiLogin();">Login</button><br><input type="hidden" id="known_id" value="">Mi Token:<br><input size="40" type="text" id="mi_token" value=""> <button type="button" onclick="pasteInto(&quot;mi_token&quot;);">Paste</button><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""> <button type="button" onclick="pasteInto(&quot;mi_bind_key&quot;);">Paste</button><br><br>';
 		}}).catch(handleError);
 	}).catch(error => {addLog(error); });
 	}).catch(handleError);
@@ -3094,16 +3094,37 @@ function renderPairings() {
 		html += '<option value="' + i + '">' + (p.mac || p.did) + '</option>';
 	});
 	sel.innerHTML = html;
+	// Put back the device chosen before the page was reloaded.
+	try {
+		let v = localStorage.getItem('pair_sel');
+		if(v !== null && pairings[parseInt(v)]) {
+			sel.value = v;
+			let p = pairings[parseInt(v)];
+			if($("pairinfo")) $("pairinfo").innerHTML = pairings.length + " loaded, using " + (p.mac || p.did);
+		} else if($("pairinfo")) {
+			$("pairinfo").innerHTML = pairings.length + " loaded";
+		}
+	} catch(e) {}
 }
 
 function applyPairing() {
 	let sel = $("pairsel");
 	if(!sel || sel.value === "") return;
-	let p = pairings[parseInt(sel.value)];
+	usePairing(pairings[parseInt(sel.value)]);
+}
+
+// The inputs live in custcfg and only exist once a device is connected, so
+// write through to storage as well — restoreCreds() fills them in later.
+function usePairing(p) {
 	if(!p) return;
+	try {
+		localStorage.setItem('mi_token', p.token);
+		localStorage.setItem('mi_bind_key', p.bindkey);
+		localStorage.setItem('pair_sel', String(pairings.indexOf(p)));
+	} catch(e) {}
 	if($("mi_token")) $("mi_token").value = p.token;
 	if($("mi_bind_key")) $("mi_bind_key").value = p.bindkey;
-	saveCreds();
+	if($("pairinfo")) $("pairinfo").innerHTML = pairings.length + " loaded, using " + (p.mac || p.did);
 	addLog("Keys set for " + (p.mac || p.did));
 }
 
@@ -3183,6 +3204,7 @@ window.onload = function() {
 	$("MAC").innerHTML= '#enable-experimental-web-platform-features may be needed to read MAC (copy link: <a href=chrome://flags/#enable-experimental-web-platform-features>Chrome<a>, <a href=opera://flags/#enable-experimental-web-platform-features>Opera<a>, <a href=edge://flags/#enable-experimental-web-platform-features>Edge<a>)';
 	addClog("Load index file 'firmware.json'...");
 	ajax_file('firmware.json', getOtaJson);
+	renderPairings(); // repopulate from a previously loaded pairings.json
 	document.querySelector("#file").addEventListener("change", function() {
 		let reader = new FileReader();
 		reader.fname = "";
@@ -4208,7 +4230,7 @@ function CustomConfig() {
 		is +='Device known id:<br><input size="40" maxlength="19" type="text" id="known_id" value="'+str+'"><br>';
 	}
 	if(mikeys.bindkey && mikeys.token) {
-		is +='Pairings: <input type="file" accept=".json,.txt" onchange="loadPairings(this);"> <select id="pairsel" onchange="applyPairing();"></select><br>Mi Token:<br><input size="40" maxlength="24" type="text" id="mi_token" value="'+dump(mikeys.token,12)+'"><br>';
+		is +='Mi Token:<br><input size="40" maxlength="24" type="text" id="mi_token" value="'+dump(mikeys.token,12)+'"><br>';
 		is +='Mi Bind Key:<br><input size="40" maxlength="32" type="text" id="mi_bind_key" value="'+dump(mikeys.bindkey,16)+'">';
 		is +=' <button type="button" title="Set new Mi Token and Bind keys" onclick="setNewTBKey();">Set new Token & Bind keys</button><br>';
 		if(cfg.ver >= 0x21)
@@ -4492,6 +4514,11 @@ function SendCustomConfig() {
 <h1>Telink BLE OTA Flasher</h1>
 <hr>
 <div style="height: auto; width: auto;">
+  <label for="pairfile">MiHome pairings.json (Mi Token / Bind Key)</label><br>
+  <input type="file" id="pairfile" accept=".json,.txt" onchange="loadPairings(this);">
+  <select id="pairsel" onchange="applyPairing();"></select>
+  <span id="pairinfo"></span>
+  <br><hr>
   <input type="checkbox" title="Web Experimental Features!" id="advmac">
   <label for="advmac">Get Advertising MAC</label>
   <br>
