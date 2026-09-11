@@ -2262,6 +2262,9 @@ function miAuthorization() {
 				restoreCreds();
 				addLog("Auto Flash 2/2: logging in");
 				keyMiLogin();
+			} else if(!autoStep && autoPending) {
+				restoreCreds();
+				startAutoFlash();
 			}
 		}).catch(handleError);
 }
@@ -3163,15 +3166,20 @@ function pasteInto(id) {
 }
 
 var autoStep = 0;
+var autoPending = false; // pressed before the device finished connecting
 // Reconnecting rebuilds custcfg, which blanks the token/bind key inputs,
 // so keep a copy to restore before the second login.
 var autoCreds = { token: "", bindkey: "" };
 
 function startAutoFlash() {
 	if(hwver_id == null || otafiles.signed == null || otafiles.custom == null) {
-		addLog("Auto Flash: firmware index not loaded.");
+		// Pressed while the device was still connecting — remember it, and let
+		// miAuthorization() kick off the run once everything is ready.
+		autoPending = true;
+		addLog("Auto Flash: queued, waiting for the device");
 		return;
 	}
+	autoPending = false;
 	if(otafiles.signed[hwver_id] == null || otafiles.custom[hwver_id] == null) {
 		addLog("Auto Flash: no firmware listed for this hardware.");
 		return;
@@ -3212,8 +3220,9 @@ function autoFlashReconnect() {
 }
 
 function autoFlashAbort(why) {
-	if(autoStep) {
+	if(autoStep || autoPending) {
 		autoStep = 0;
+		autoPending = false;
 		addLog("Auto Flash stopped: " + why);
 	}
 }
