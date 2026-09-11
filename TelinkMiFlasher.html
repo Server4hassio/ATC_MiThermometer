@@ -2975,6 +2975,9 @@ function LastOriginal() {
  * finished) and the LOG_SUCCESS handler (login done, send pass 2).
  */
 var autoStep = 0;
+// Reconnecting rebuilds custcfg, which blanks the token/bind key inputs,
+// so keep a copy to restore before the second login.
+var autoCreds = { token: "", bindkey: "" };
 
 function startAutoFlash() {
 	if(hwver_id == null || otafiles.signed == null || otafiles.custom == null) {
@@ -2989,6 +2992,8 @@ function startAutoFlash() {
 		addLog("Auto Flash: enter Mi Token (24 hex) and Bind Key (32 hex) first.");
 		return;
 	}
+	autoCreds.token = $("mi_token").value;
+	autoCreds.bindkey = $("mi_bind_key").value;
 	autoStep = 1;
 	if(is_logged_in) {
 		addLog("Auto Flash 1/2: signed firmware");
@@ -3007,7 +3012,12 @@ function autoFlashReconnect() {
 	// Service discovery and Mi auth setup run as promise chains with no
 	// completion hook we can attach to, so give them time before logging in.
 	setTimeout(function() {
-		if(autoStep == 2 && miConnected && !is_logged_in) keyMiLogin();
+		if(autoStep != 2) return;
+		if(!miConnected) { autoFlashAbort("device did not come back"); return; }
+		if(is_logged_in) return;
+		if($("mi_token")) $("mi_token").value = autoCreds.token;
+		if($("mi_bind_key")) $("mi_bind_key").value = autoCreds.bindkey;
+		keyMiLogin();
 	}, 5000);
 }
 
