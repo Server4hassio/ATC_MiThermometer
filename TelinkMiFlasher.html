@@ -2279,7 +2279,7 @@ const KNOWN_SERVICE_UUIDS = [
 // Probe the known UUIDs one at a time and return whichever exist, in the
 // same shape getPrimaryServices() would have returned.
 function probeKnownServices(server) {
-	addClog("Probing known services individually");
+	addLog("Probing known services individually");
 	let found = [];
 	let chain = Promise.resolve();
 	KNOWN_SERVICE_UUIDS.forEach(uuid => {
@@ -2298,7 +2298,7 @@ function getServicesRetry(server, tries) {
 	return server.getPrimaryServices().catch(err => {
 		if(!server.connected) throw err;
 		if(tries > 0) {
-			addClog("getPrimaryServices failed, retrying (" + tries + " left)");
+			addLog("getPrimaryServices failed, retrying (" + tries + " left)");
 			return new Promise(r => setTimeout(r, 600)).then(() => getServicesRetry(server, tries - 1));
 		}
 		return probeKnownServices(server);
@@ -2309,7 +2309,7 @@ function doConnect() {
  if(bluetoothDevice != null) {
 	fsignota = "";
 	bluetoothDevice.gatt.connect().then(server => {
-		addClog("Found GATT server");
+		addLog("Found GATT server");
 		gattServer = server;
 		// Settle the link with one service + characteristic fetch before
 		// enumerating — the order atc1441's flasher uses, which connects on
@@ -2317,8 +2317,11 @@ function doConnect() {
 		// Use the local `server`: a disconnect mid-chain nulls gattServer.
 		return server.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912')
 			.then(svc => svc.getCharacteristic('00010203-0405-0607-0809-0a0b0c0d2b12'))
-			.catch(() => null)
-			.then(() => getServicesRetry(server, 3)).then(services => {
+			.then(() => addLog("Warm-up ok"))
+			.catch(e => addLog("Warm-up skipped: " + e))
+			.then(() => getServicesRetry(server, 3))
+			.then(services => { addLog("Services found: " + services.length); return services; })
+			.then(services => {
 		miEnabled = false;
 		otaEnabled = false;
 		customEnabled = false;
