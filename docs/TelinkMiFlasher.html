@@ -3770,13 +3770,13 @@ function CustomConfig() {
 		is += 'Minimum LCD refresh rate: <input size="5" title="0.5..12.75 sec, step: 0.05 s, default 2.45 s" id="cfg_lcd_tint" maxlength="6" value="2.45"> s, step: 0.05 s<br><br>';
 	if(cfg.ver == 0x19) {
 		is += 'Recording measurements to flash memory <input type="checkbox" id="cfg_flg2_memo" title="Recording measurements to flash memory (cyclic buffer for 19632 measurements)">';
-		is += ' <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button> <a href="GraphMemo.html" target="_blank">GraphMemo.html</a><br><br>';
+		is += ' <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button><br><br>';
 	}
 	if(cfg.ver >= 0x20) {
 		is += 'Recording averaging measurements to flash memory <input size="5" title="0..255, =0 - off, default 60. Set time/date!" id="cfg_av_meas_mem" maxlength="3" value="60"> x(measure interval) <span id="cfg_av_meas_mem_val"></span><br>';
 		if(cfg.ver >= 0x23)
 			is += '<button type="button" onclick="sendCustomSetting(&quot;36123400&quot;);">!Delete all records!</button> '
-		is += '<a href="GraphMemo.html" target="_blank">GraphMemo.html</a> <button type="button" onclick="setDevTime();">Set Time</button> <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button><br><br>';
+		is += '<button type="button" onclick="setDevTime();">Set Time</button> <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button><br><br>';
 	}
 	is += '<button type="button" onclick="SendCustomConfig()">Send Config</button>';
 	is += ' <button type="button" onclick="sendCustomSetting(&quot;56&quot;);">Set default</button><br>';
@@ -3948,7 +3948,7 @@ function CustomConfig() {
   } else {
 	is +='Recording averaging measurements to flash memory <input size="5" title="0..255, =0 - off, default 60. Set time/date!" id="cfg_av_meas_mem" maxlength="3" value="60"> x(measure interval) <span id="cfg_av_meas_mem_val"></span><br>';
 	is +='<button type="button" onclick="sendCustomSetting(&quot;36123400&quot;);">!Delete all records!</button> '
-	is +='<a href="GraphMemo.html" target="_blank">GraphMemo.html</a> <button type="button" onclick="setDevTime();">Set Time</button> <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button><br><br>';
+	is +='<button type="button" onclick="setDevTime();">Set Time</button> <button type="button" onclick="sendGetMemo(50);">Get the last 50 records</button><br><br>';
 	is +='<button type="button" onclick="SendCustomConfig()">Send Config</button>';
 	is +=' <button type="button" onclick="sendCustomSetting(&quot;56&quot;);">Set default</button><br>';
 	is +='<hr><button type="button" title="Get time clock delta" onclick="sendCustomSetting(&quot;24&quot;);">Get delta time</button>';
@@ -4148,35 +4148,6 @@ function SendCustomConfig() {
 }
 </script>
 <h1>Telink BLE OTA Flasher</h1>
-<div class="navbar">
-	<div class="container nav-container">
-		<input class="checkbox" type="checkbox" name="" id="">
-		<div class="hamburger-lines">
-		  <span class="line line1"></span>
-		  <span class="line line2"></span>
-		  <span class="line line3"></span>
-		</div>
-	  <div class="menu-items">
-			<li> GitHub </li>
-			<li><a href="https://github.com/atc1441/ATC_MiThermometer">© atc1441</a> <a href="https://github.com/pvvx/ATC_MiThermometer">&#9432; pvvx</a></li>
-			<li> Live Data </li>
-			<li><a href="GraphAtc.html">Graph Atc 1</a></li>
-			<li><a href="GraphAtc1.html">Graph Atc 2</a></li>
-			<li><a href="GraphAtc2.html">Graph Atc 3</a></li>
-			<li><a href="DevPoint.html">Dev Point</a></li>
-			<li><a href="Advertising.html">Advertising</a></li>
-			<li>Stored data</li>
-			<li><a href="GraphMemo.html">Memo Graph</a></li>
-			<li><a href="GraphMemoOriginal.html">LYWSD03MMC Memo Graph </a></li>
-			<li>Others & Flasher</li>
-
-			<li><a href="ZigbeeTlcIdxOTA.html">ZigbeeTlcIdxOTA</a></li>
-			<li><a href="TelinkMiFlasher.html">Flasher</a></li>
-			<li><a href="TelinkOTA.html">OTA Flasher</a></li>
-			<li><a href="USBCOMFlashTx.html">Windows USB-COM Flasher</a></li>
-	  </div>
-	</div>
-</div>
 <hr>
 <div style="height: auto; width: auto;">
   <input type="checkbox" title="Web Experimental Features!" id="advmac">
