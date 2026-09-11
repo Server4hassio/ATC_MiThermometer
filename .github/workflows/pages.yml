@@ -1,0 +1,44 @@
+name: Deploy flasher to Pages
+
+# Jekyll chokes on the SDK/src trees at the repo root, so publish the
+# flasher as a plain static site instead of using the branch-deploy path.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage flasher files
+        run: |
+          mkdir -p _site
+          cp TelinkMiFlasher.html core.js styles.css firmware.json _site/
+          cp -r bin signfiles _site/
+          find _site -type f | sort
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
