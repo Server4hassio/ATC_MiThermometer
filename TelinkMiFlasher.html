@@ -3086,7 +3086,11 @@ function loadPairings(input) {
 	r.onload = () => {
 		pairings = parsePairings(r.result);
 		if(!pairings.length) { addLog("No token/bind_key pairs found in that file."); return; }
-		try { localStorage.setItem('pairings', JSON.stringify(pairings)); } catch(e) {}
+		try {
+			localStorage.setItem('pairings', JSON.stringify(pairings));
+		} catch(e) {
+			addLog("Pairings kept for this page only — storage unavailable: " + e);
+		}
 		addLog("Loaded " + pairings.length + " pairings");
 		renderPairings();
 		// No auto-select: keys are only applied when a connected device's MAC
@@ -3101,14 +3105,21 @@ function loadStoredPairings() {
 	try {
 		let s = localStorage.getItem('pairings');
 		if(s) pairings = JSON.parse(s) || [];
-	} catch(e) { pairings = []; }
+	} catch(e) {
+		pairings = [];
+		addLog("Could not read stored pairings: " + e);
+	}
 }
 
 function renderPairings() {
 	let sel = $("pairsel");
 	if(!sel) return;
 	loadStoredPairings();
-	if(!pairings.length) { sel.innerHTML = '<option value="">(no pairings loaded)</option>'; return; }
+	if(!pairings.length) {
+		sel.innerHTML = '<option value="">(no pairings loaded)</option>';
+		if($("pairinfo")) $("pairinfo").innerHTML = "none loaded";
+		return;
+	}
 	let html = '<option value="">-- pick a device --</option>';
 	pairings.forEach((p, i) => {
 		html += '<option value="' + i + '">' + (p.mac || p.did) + '</option>';
