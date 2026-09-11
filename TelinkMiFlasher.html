@@ -1052,20 +1052,26 @@ function miAction() {
 			return getMiCharacteristics(ServiceMain, 2);
 		}).then(characteristics => {
 			addLog("Mi characteristics: " + characteristics.length);
-			//micharacteristics = characteristics;
-			for (let i = 0; i < characteristics.length; i++) {
-				addClog(characteristics[i].uuid);
-				if (characteristics[i].uuid == "ebe0ccd8-7a0a-4b0c-8a1a-6ff2997da3a6") {
-					ServiceMain.getCharacteristic(characteristics[i].uuid).then (characteristic =>
-					{ addClog("Found MiSet characteristic Speed");
-					 writeCharacteristicSpeed = characteristic; });
+			// Chain these instead of firing them off in parallel: the old code
+			// started three GATT operations and called miAuthorization() without
+			// waiting, which some adapters answer with "GATT operation failed".
+			// The characteristic objects are already in hand, so there's also no
+			// need to re-fetch each one by UUID.
+			// Notification/read failures are logged, not fatal — login still runs.
+			let chain = Promise.resolve();
+			characteristics.forEach(c => {
+				if (c.uuid == "ebe0ccd8-7a0a-4b0c-8a1a-6ff2997da3a6") {
+					chain = chain.then(() => {
+						addClog("Found MiSet characteristic Speed");
+						writeCharacteristicSpeed = c;
+					});
 				}
-				else if (characteristics[i].uuid == "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6") {
-					ServiceMain.getCharacteristic(characteristics[i].uuid).then ( characteristic =>
-					{ addClog('Found MiTemp characteristic');
-						nitifiyCharTemp = characteristic;
-						return nitifiyCharTemp.startNotifications().then(() => {
-							nitifiyCharTemp.addEventListener('characteristicvaluechanged', event => {
+				else if (c.uuid == "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6") {
+					chain = chain.then(() => {
+						addClog('Found MiTemp characteristic');
+						nitifiyCharTemp = c;
+						return c.startNotifications().then(() => {
+							c.addEventListener('characteristicvaluechanged', event => {
 							let value = event.target.value;
 							let temp = value.getInt16(0, true) / 100;
 							let hum = value.getUint8(2);
@@ -1073,20 +1079,23 @@ function miAction() {
 							let tempTempString = "Temp: " + temp + "°C, Humi: " + hum + "%, Bat: "+vbat+" mV";
 							$("tempHumiData").innerHTML = '<hr>'+tempTempString;
 							addClog(tempTempString); });
-						});
+						}).catch(e => addLog("Temp notify skipped: " + e));
 					});
 				}
-				else if (characteristics[i].uuid == "ebe0ccb7-7a0a-4b0c-8a1a-6ff2997da3a6") {
-					ServiceMain.getCharacteristic(characteristics[i].uuid).then ( characteristic =>
-					{ addClog('Found MiClock characteristic');
-						clockCharacteristic = characteristic;
-						return clockCharacteristic.readValue().then(value => {
+				else if (c.uuid == "ebe0ccb7-7a0a-4b0c-8a1a-6ff2997da3a6") {
+					chain = chain.then(() => {
+						addClog('Found MiClock characteristic');
+						clockCharacteristic = c;
+						return c.readValue().then(value => {
 							showMiClock(value);
-						});
+						}).catch(e => addLog("Clock read skipped: " + e));
 					});
 				}
-			}
-			miAuthorization()
+			});
+			return chain.then(() => {
+				addLog("Mi setup done, authorizing");
+				miAuthorization();
+			});
 		}).catch(handleError);
 }
 var buf11;
