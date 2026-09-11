@@ -8,6 +8,7 @@ out/*
 *.bin
 *.elf
 *.lst
+*.zigbee
 # downloaded toolchain (CI cache)
 SDK/tools/linux/tc32/
 SDK/tools/linux/*.tar.bz2
