@@ -1,0 +1,15 @@
+{"version": 88, "betaver": 88,
+"zbjson": null,
+"zbdjson": null,
+"custom":[
+"bin/ATC_v58.bin",
+"?","?","?","?","?",
+"bin/CGDK2_v58.bin"
+],
+"original":[
+"?","?","?","?","?","?",
+"bin/Original/Original_OTA_CGDK2_v1.1.1_0223.bin"
+],
+"signed":[
+"bin/Original/Original_OTA_Xiaomi_LYWSD03MMC_v2.1.1_0159c.bin"
+]}

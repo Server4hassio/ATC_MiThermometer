@@ -3,12 +3,15 @@ name: Build custom firmware
 on:
   push:
     branches: [ "**" ]
+    paths-ignore: [ "docs/bin/**" ]
   pull_request:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,3 +73,20 @@ jobs:
           name: CGDK2_v58-Qingping
           path: CGDK2_v58.bin
           if-no-files-found: error
+
+      # Artifacts expire after 90 days; the Pages flasher needs a stable URL,
+      # so the built binaries are committed into docs/bin/ as well.
+      - name: Publish firmware to docs/bin
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p docs/bin
+          cp ATC_v58.bin CGDK2_v58.bin docs/bin/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/bin/ATC_v58.bin docs/bin/CGDK2_v58.bin
+          if git diff --staged --quiet; then
+            echo "Firmware unchanged, nothing to commit."
+          else
+            git commit -m "CI: publish firmware for ${GITHUB_SHA::7}"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
+          fi
