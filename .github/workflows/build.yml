@@ -3,7 +3,7 @@ name: Build custom firmware
 on:
   push:
     branches: [ "**" ]
-    paths-ignore: [ "docs/bin/**" ]
+    paths-ignore: [ "bin/**" ]
   pull_request:
   workflow_dispatch:
 
@@ -75,15 +75,14 @@ jobs:
           if-no-files-found: error
 
       # Artifacts expire after 90 days; the Pages flasher needs a stable URL,
-      # so the built binaries are committed into docs/bin/ as well.
-      - name: Publish firmware to docs/bin
+      # so the built binaries are committed into bin/ as well.
+      - name: Publish firmware to bin/
         if: github.event_name != 'pull_request'
         run: |
-          mkdir -p docs/bin
-          cp ATC_v58.bin CGDK2_v58.bin docs/bin/
+          cp ATC_v58.bin CGDK2_v58.bin bin/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/bin/ATC_v58.bin docs/bin/CGDK2_v58.bin
+          git add bin/ATC_v58.bin bin/CGDK2_v58.bin
           if git diff --staged --quiet; then
             echo "Firmware unchanged, nothing to commit."
           else

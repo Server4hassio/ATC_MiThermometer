@@ -10,9 +10,9 @@ out/*
 *.lst
 *.zigbee
 # published firmware for the GitHub Pages flasher (kept in VCS on purpose)
-!docs/bin/*.bin
-!docs/bin/Original/*.bin
-!docs/signfiles/*.bin
+!bin/*.bin
+!bin/Original/*.bin
+!signfiles/*.bin
 # downloaded toolchain (CI cache)
 SDK/tools/linux/tc32/
 SDK/tools/linux/*.tar.bz2
