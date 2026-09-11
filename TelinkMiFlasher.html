@@ -1961,6 +1961,10 @@ function miAuthorization() {
 						addLog("Login successful");
 						setStatus("Login successful");
 						menuUpgrade();
+						if(autoStep == 2) {
+							addLog("Auto Flash 2/2: custom firmware");
+							FirmwareUpgrade();
+						}
 					} else if (value == "22000000") { // LOG_INVALID_LTMK
 						addLog("Login invalid LMTK!");
 						setStatus("Login invalid LMTK!");
@@ -2337,7 +2341,7 @@ function doConnect() {
 				fwmaxsize = MAX_EXT_OTA_SIZE;
 			}
 			if ((devName.substr(0,10) == "LYWSD03MMC") && (fwStr.substr(0,10) == "2.1.1_0159")) {
-			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware LYWSD03MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0159 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br>Device known id:<br><input size="40" type="text" id="known_id" value=""><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""><br><br>';
+			    $("custcfg").innerHTML = '<hr><b>Warning:</b> Firmware LYWSD03MMC <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602">version 2.1.1_0159 requires registration in MI-Home</a> and obtaining IDs. <a href="https://github.com/pvvx/ATC_MiThermometer/issues/602" target="_blank">Help</a><br><button type="button" onclick="keyMiLogin();">Login</button><br>Device known id:<br><input size="40" type="text" id="known_id" value=""><br>Mi Token:<br><input size="40" type="text" id="mi_token" value=""><br>Mi Bind Key:<br><input size="40" type="text" id="mi_bind_key" value=""><br><button type="button" onclick="startAutoFlash();">Auto Flash (signed + custom)</button><br><br>';
 			    fwmaxsize = MAX_BLE_OTA_SIZE;
 				fsignota = "sign_2.1.1_0159c.bin";
 				miAction();
@@ -2668,6 +2672,7 @@ function getSignFile(data, filename) {
 	blockCount = firmwareArray.length / 32;
 	addAlog("Count: " + blockCount);
 	menuUpgrade();
+	if(autoStep) startDFU();
 }
 
 function getFwArray(data, filename, flg) {
@@ -2703,6 +2708,7 @@ function getFwArray(data, filename, flg) {
 	blockCount = firmwareArray.length / 32;
 	addAlog("Count: " + blockCount);
 	menuUpgrade();
+	if(autoStep) startDFU();
 }
 
 function getFirmwareArray(data, filename) {
@@ -2860,6 +2866,52 @@ function LastOriginal() {
 	}
 }
 
+/* --- Auto Flash -------------------------------------------------------
+ * A stock LYWSD03MMC on 2.1.1_0159 needs the signed intermediate before
+ * it will accept unsigned custom firmware, so flashing is two OTA passes
+ * with a reboot and a fresh Mi login in between. autoStep tracks which
+ * pass we're in: 1 = signed, 2 = custom, 0 = not running.
+ * Hooks live in getFwArray (start the transfer), showOtaError (pass
+ * finished) and the LOG_SUCCESS handler (login done, send pass 2).
+ */
+var autoStep = 0;
+
+function startAutoFlash() {
+	if(hwver_id == null || otafiles.signed == null || otafiles.custom == null) {
+		addLog("Auto Flash: firmware index not loaded.");
+		return;
+	}
+	if(otafiles.signed[hwver_id] == null || otafiles.custom[hwver_id] == null) {
+		addLog("Auto Flash: no firmware listed for this hardware.");
+		return;
+	}
+	if($("mi_token").value.length != 24 || $("mi_bind_key").value.length != 32) {
+		addLog("Auto Flash: enter Mi Token (24 hex) and Bind Key (32 hex) first.");
+		return;
+	}
+	autoStep = 1;
+	addLog("Auto Flash 1/2: signed firmware");
+	LastOriginal();
+}
+
+function autoFlashReconnect() {
+	addLog("Auto Flash 2/2: reconnecting");
+	connectTrys = 0;
+	doConnect();
+	// Service discovery and Mi auth setup run as promise chains with no
+	// completion hook we can attach to, so give them time before logging in.
+	setTimeout(function() {
+		if(autoStep == 2 && miConnected && !is_logged_in) keyMiLogin();
+	}, 5000);
+}
+
+function autoFlashAbort(why) {
+	if(autoStep) {
+		autoStep = 0;
+		addLog("Auto Flash stopped: " + why);
+	}
+}
+
 
 window.onload = function() {
 	//TODO Test enable -web-platform-features
@@ -2922,6 +2974,19 @@ function showOtaError(e) {
 	s = "Update " + err + " after " + (new Date().getTime() - startTime) / 1000 + " seconds";
 	addLog(s);
 	setStatus(s);
+	if(autoStep) {
+		if(e != 0) {
+			autoFlashAbort("OTA " + err);
+		} else if(autoStep == 1) {
+			autoStep = 2;
+			addLog("Auto Flash: waiting for reboot...");
+			setTimeout(autoFlashReconnect, 6000);
+		} else {
+			autoStep = 0;
+			addLog("Auto Flash: complete");
+			setStatus("Auto Flash: complete");
+		}
+	}
 }
 
 function sendOTAblock(blockNr) {
