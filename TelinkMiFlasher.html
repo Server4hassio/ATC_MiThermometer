@@ -459,6 +459,7 @@ const tabBTHome = [
 function catchAdvertisement(device) {
   addAlog("Get Advertising MAC (Web Experimental Features!)");
   const abortController = new AbortController();
+  let advDone = false; // guards against connecting twice
   device.addEventListener('advertisementreceived', (event) => {
 	addClog('Received advertisement from "' + device.name + '"...');
 	event.serviceData.forEach((b, key) => {
@@ -824,14 +825,31 @@ function catchAdvertisement(device) {
 	 }
 	}
 	addAlog(s);
+	if(advDone) return;
+	advDone = true;
 	abortController.abort();
 	doConnect();
 	})
   }, { once: true });
   addClog('Catching advertisement from "' + device.name + '"...');
+  // Connecting only happens once an advertisement arrives, so make sure we
+  // still get there if watchAdvertisements is unavailable (it needs a Chrome
+  // experimental flag) or the device simply doesn't advertise in time.
+  let advFallback = setTimeout(() => {
+	if(advDone) return;
+	advDone = true;
+	addLog("No advertisement — connecting without MAC");
+	try { abortController.abort(); } catch(e) {}
+	doConnect();
+  }, 5000);
   device.watchAdvertisements({ signal: abortController.signal })
   .catch(error => {
 	addClog('Error: ' + error);
+	if(advDone) return;
+	advDone = true;
+	clearTimeout(advFallback);
+	addLog("Advertising MAC unavailable — connecting without it");
+	doConnect();
   });
 }
 var cusService, cus017Chr, cus018Chr, cus100Chr;
@@ -3068,9 +3086,8 @@ function loadPairings(input) {
 		try { localStorage.setItem('pairings', JSON.stringify(pairings)); } catch(e) {}
 		addLog("Loaded " + pairings.length + " pairings");
 		renderPairings();
-		// New devices are appended, so the last entry is the one just paired.
-		let sel = $("pairsel");
-		if(sel) { sel.value = String(pairings.length - 1); applyPairing(); }
+		// No auto-select: keys are only applied when a connected device's MAC
+		// matches an entry, or when one is picked by hand.
 	};
 	r.onerror = () => addLog("Could not read that file.");
 	r.readAsText(f);
@@ -3094,17 +3111,7 @@ function renderPairings() {
 		html += '<option value="' + i + '">' + (p.mac || p.did) + '</option>';
 	});
 	sel.innerHTML = html;
-	// Put back the device chosen before the page was reloaded.
-	try {
-		let v = localStorage.getItem('pair_sel');
-		if(v !== null && pairings[parseInt(v)]) {
-			sel.value = v;
-			let p = pairings[parseInt(v)];
-			if($("pairinfo")) $("pairinfo").innerHTML = pairings.length + " loaded, using " + (p.mac || p.did);
-		} else if($("pairinfo")) {
-			$("pairinfo").innerHTML = pairings.length + " loaded";
-		}
-	} catch(e) {}
+	if($("pairinfo")) $("pairinfo").innerHTML = pairings.length + " loaded";
 }
 
 function applyPairing() {
@@ -3120,7 +3127,6 @@ function usePairing(p) {
 	try {
 		localStorage.setItem('mi_token', p.token);
 		localStorage.setItem('mi_bind_key', p.bindkey);
-		localStorage.setItem('pair_sel', String(pairings.indexOf(p)));
 	} catch(e) {}
 	if($("mi_token")) $("mi_token").value = p.token;
 	if($("mi_bind_key")) $("mi_bind_key").value = p.bindkey;
@@ -4519,7 +4525,7 @@ function SendCustomConfig() {
   <select id="pairsel" onchange="applyPairing();"></select>
   <span id="pairinfo"></span>
   <br><hr>
-  <input type="checkbox" title="Web Experimental Features!" id="advmac">
+  <input type="checkbox" title="Web Experimental Features!" id="advmac" checked>
   <label for="advmac">Get Advertising MAC</label>
   <br>
   <label for="namePrefix">BLE device name prefix filter(s)</label>
