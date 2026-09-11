@@ -1014,16 +1014,44 @@ function getMiClock() {
 		showMiClock(value);
 	});
 }
+// The Mi characteristics this page uses, for adapters that refuse to list
+// them. Same failure mode as getPrimaryServices(): asking by UUID works.
+const MI_CHAR_UUIDS = [
+	'ebe0ccd8-7a0a-4b0c-8a1a-6ff2997da3a6', // write speed
+	'ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6', // temperature / humidity
+	'ebe0ccb7-7a0a-4b0c-8a1a-6ff2997da3a6'  // clock
+];
+
+function getMiCharacteristics(service, tries) {
+	return service.getCharacteristics().catch(err => {
+		if(tries > 0) {
+			addLog("getCharacteristics failed, retrying (" + tries + " left)");
+			return new Promise(r => setTimeout(r, 600)).then(() => getMiCharacteristics(service, tries - 1));
+		}
+		addLog("Probing Mi characteristics individually");
+		let found = [];
+		let chain = Promise.resolve();
+		MI_CHAR_UUIDS.forEach(uuid => {
+			chain = chain.then(() =>
+				service.getCharacteristic(uuid)
+					.then(c => { found.push(c); })
+					.catch(() => {})
+			);
+		});
+		return chain.then(() => found);
+	});
+}
+
 //var micharacteristics;
 function miAction() {
 	writeCharacteristicSpeed = null;
 	gattServer.getPrimaryService('ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6')
 		.then(service => {
-			addClog("Found MiMain service");
+			addLog("Found MiMain service");
 			ServiceMain = service;
-			addClog("Check micharacteristics:");
-			return ServiceMain.getCharacteristics();
+			return getMiCharacteristics(ServiceMain, 2);
 		}).then(characteristics => {
+			addLog("Mi characteristics: " + characteristics.length);
 			//micharacteristics = characteristics;
 			for (let i = 0; i < characteristics.length; i++) {
 				addClog(characteristics[i].uuid);
