@@ -2263,20 +2263,33 @@ function getDevVersion(devInfEnabled) {
 	}).catch(error => { addClog(error); return resolve(null);});
 }
 
+// getPrimaryServices() intermittently answers "GATT operation failed for
+// unknown reason" on some adapters. Retrying the same call usually succeeds,
+// which is cheaper than dropping the link and reconnecting from scratch.
+function getServicesRetry(server, tries) {
+	return server.getPrimaryServices().catch(err => {
+		if(tries > 0 && server.connected) {
+			addClog("getPrimaryServices failed, retrying (" + tries + " left)");
+			return new Promise(r => setTimeout(r, 600)).then(() => getServicesRetry(server, tries - 1));
+		}
+		throw err;
+	});
+}
+
 function doConnect() {
  if(bluetoothDevice != null) {
 	fsignota = "";
 	bluetoothDevice.gatt.connect().then(server => {
 		addClog("Found GATT server");
 		gattServer = server;
-		// Some adapters answer "GATT operation failed" when getPrimaryServices()
-		// is the very first request after connect. Fetching one known service
-		// settles the link first; atc1441's flasher connects in this order and
-		// works on hardware where enumerating everything up front does not.
+		// Settle the link with one service + characteristic fetch before
+		// enumerating — the order atc1441's flasher uses, which connects on
+		// hardware where going straight to getPrimaryServices() does not.
 		// Use the local `server`: a disconnect mid-chain nulls gattServer.
 		return server.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912')
+			.then(svc => svc.getCharacteristic('00010203-0405-0607-0809-0a0b0c0d2b12'))
 			.catch(() => null)
-			.then(() => server.getPrimaryServices()).then(services => {
+			.then(() => getServicesRetry(server, 3)).then(services => {
 		miEnabled = false;
 		otaEnabled = false;
 		customEnabled = false;
