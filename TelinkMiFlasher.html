@@ -1961,27 +1961,41 @@ function miAuthorization() {
 						addLog("Login successful");
 						setStatus("Login successful");
 						menuUpgrade();
-						if(autoStep == 2) {
+						if(autoStep == 1) {
+							addLog("Auto Flash 1/2: signed firmware");
+							LastOriginal();
+						} else if(autoStep == 2) {
 							addLog("Auto Flash 2/2: custom firmware");
 							FirmwareUpgrade();
 						}
 					} else if (value == "22000000") { // LOG_INVALID_LTMK
 						addLog("Login invalid LMTK!");
 						setStatus("Login invalid LMTK!");
+						autoFlashAbort("login rejected (check Token / Bind Key)");
 					} else if (value == "23000000") { // LOG_FAILED
 						addLog("Login Failed!");
 						setStatus("Login Failed!");
+						autoFlashAbort("login failed");
 					} else	if (value == "e0000000") { // ERR_NOT_REGISTERED
 						addLog("Not registered!");
 						setStatus("Not registered!");
+						autoFlashAbort("device not registered in MiHome");
 					} else	if (value == "e1000000") { // ERR_REGISTERED
 						addLog("Error Registered!");
 						setStatus("Error Registered!");
+						autoFlashAbort("registration error");
 					} else	if (value == "e2000000") { // ERR_REPEAT_LOGIN
 						is_logged_in = true;
 						addLog("Repeat login!");
 						setStatus("Repeat login!");
 						menuUpgrade();
+						if(autoStep == 1) {
+							addLog("Auto Flash 1/2: signed firmware");
+							LastOriginal();
+						} else if(autoStep == 2) {
+							addLog("Auto Flash 2/2: custom firmware");
+							FirmwareUpgrade();
+						}
 					} else	if (value == "e3000000") { // ERR_INVALID_OOB
 						addLog("Error: Invalid OOB!");
 						setStatus("Invalid OOB!");
@@ -2890,8 +2904,14 @@ function startAutoFlash() {
 		return;
 	}
 	autoStep = 1;
-	addLog("Auto Flash 1/2: signed firmware");
-	LastOriginal();
+	if(is_logged_in) {
+		addLog("Auto Flash 1/2: signed firmware");
+		LastOriginal();
+	} else {
+		// Both OTA passes need a Mi login first; LOG_SUCCESS continues the flow.
+		addLog("Auto Flash 1/2: logging in");
+		keyMiLogin();
+	}
 }
 
 function autoFlashReconnect() {
