@@ -3132,6 +3132,25 @@ function usePairing(p) {
 	addLog("Keys set for " + (p.mac || p.did));
 }
 
+// Audible/haptic cue when an update ends, so a batch can be worked through
+// without watching the screen.
+function notifyDone(ok) {
+	try { if(navigator.vibrate) navigator.vibrate(ok ? 200 : [120, 90, 120]); } catch(e) {}
+	try {
+		let Ctx = window.AudioContext || window.webkitAudioContext;
+		if(!Ctx) return;
+		let ctx = new Ctx();
+		let osc = ctx.createOscillator();
+		let gain = ctx.createGain();
+		osc.connect(gain);
+		gain.connect(ctx.destination);
+		gain.gain.value = 0.2;
+		osc.frequency.value = ok ? 880 : 300;
+		osc.start();
+		setTimeout(() => { try { osc.stop(); ctx.close(); } catch(e) {} }, ok ? 180 : 450);
+	} catch(e) {}
+}
+
 var autoStep = 0;
 var autoPending = false; // pressed before the device finished connecting
 // Reconnecting rebuilds custcfg, which blanks the token/bind key inputs,
@@ -3257,6 +3276,7 @@ function showOtaError(e) {
 	s = "Update " + err + " after " + (new Date().getTime() - startTime) / 1000 + " seconds";
 	addLog(s);
 	setStatus(s);
+	notifyDone(e == 0);
 	if(autoStep) {
 		if(e != 0) {
 			autoFlashAbort("OTA " + err);
