@@ -460,7 +460,17 @@ function catchAdvertisement(device) {
   addAlog("Get Advertising MAC (Web Experimental Features!)");
   const abortController = new AbortController();
   let advDone = false; // guards against connecting twice
+  let advFallback = null;
+  advMac = ''; // never carry the previous device's MAC over
+  function advConnect() {
+	if(advDone) return;
+	advDone = true;
+	clearTimeout(advFallback);
+	try { abortController.abort(); } catch(e) {}
+	doConnect();
+  }
   device.addEventListener('advertisementreceived', (event) => {
+	if(advDone) return;
 	addClog('Received advertisement from "' + device.name + '"...');
 	event.serviceData.forEach((b, key) => {
 	const buf = new Uint8Array(b.buffer);
@@ -825,31 +835,29 @@ function catchAdvertisement(device) {
 	 }
 	}
 	addAlog(s);
-	if(advDone) return;
-	advDone = true;
-	abortController.abort();
-	doConnect();
+	// Not every Mi frame carries the MAC, and without it the wrong keys get
+	// used — keep listening until one does (or the fallback timer fires).
+	if(key == '0000fe95-0000-1000-8000-00805f9b34fb' && !advMac) return;
+	advConnect();
 	})
-  }, { once: true });
+  });
   addClog('Catching advertisement from "' + device.name + '"...');
   // Connecting only happens once an advertisement arrives, so make sure we
   // still get there if watchAdvertisements is unavailable (it needs a Chrome
   // experimental flag) or the device simply doesn't advertise in time.
-  let advFallback = setTimeout(() => {
+  advFallback = setTimeout(() => {
 	if(advDone) return;
-	advDone = true;
-	addLog("No advertisement — connecting without MAC");
-	try { abortController.abort(); } catch(e) {}
-	doConnect();
-  }, 5000);
+	addLog("No advertisement with MAC in 15s — connecting without it");
+	noMacWarning();
+	advConnect();
+  }, 15000);
   device.watchAdvertisements({ signal: abortController.signal })
   .catch(error => {
 	addClog('Error: ' + error);
 	if(advDone) return;
-	advDone = true;
-	clearTimeout(advFallback);
 	addLog("Advertising MAC unavailable — connecting without it");
-	doConnect();
+	noMacWarning();
+	advConnect();
   });
 }
 var cusService, cus017Chr, cus018Chr, cus100Chr;
@@ -3046,12 +3054,32 @@ function matchPairingByMac() {
 	let p = pairings.find(x => x.mac && x.mac.replace(/[^0-9a-fA-F]/g, '').toUpperCase() == want);
 	if(!p) {
 		addLog("MAC " + advMac + " is not in the loaded pairings");
+		clearStoredCreds();
 		return false;
 	}
 	// usePairing writes to storage as well — the input fields don't exist yet
 	// at this point, since the advertisement arrives before we connect.
 	usePairing(p);
 	return true;
+}
+
+// The stored keys belong to whichever device was flashed last; logging in
+// with them on a different device just fails, so drop them when this
+// device's own keys can't be found.
+function clearStoredCreds() {
+	try {
+		localStorage.removeItem('mi_token');
+		localStorage.removeItem('mi_bind_key');
+	} catch(e) {}
+	if($("mi_token")) $("mi_token").value = '';
+	if($("mi_bind_key")) $("mi_bind_key").value = '';
+}
+
+function noMacWarning() {
+	loadStoredPairings();
+	if(!pairings.length) return; // keys are entered by hand, leave them alone
+	clearStoredCreds();
+	addLog("MAC not found, keys not set — Disconnect and Connect again");
 }
 
 function parsePairings(text) {
