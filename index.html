@@ -94,19 +94,24 @@ summary { cursor: pointer; padding: 6px 0; }
 	<h1>Мэдрэгч шинэчлэх</h1>
 	<p class="lead">Battery сольсны дараа дата ирэхээ больсон мэдрэгчийг засна</p>
 
+	<div class="panel warn" id="devices">
+		<h2>⚠ Зөвхөн Android утас эсвэл Windows notebook</h2>
+		<p><b>Chrome</b> хөтчөөр нээнэ үү. <b>iPhone дээр ажиллахгүй.</b></p>
+	</div>
+
 	<div class="panel warn" id="unsupported" hidden></div>
 
 	<!-- one view at a time, switched by show() -->
 	<section id="v-start">
 		<ol class="howto">
-			<li><span>Утасныхаа <b>Bluetooth</b>-ийг асаа</span></li>
+			<li><span>Утас эсвэл notebook-ийнхоо <b>Bluetooth</b>-ийг асаа</span></li>
 			<li><span>Мэдрэгчийн <b>хажууд</b> оч</span></li>
 			<li><span>Доорх цэнхэр товчийг дар</span></li>
 		</ol>
 		<div class="panel warn" id="nothing" style="text-align:left" hidden>
 			<h2>Мэдрэгч сонгогдсонгүй</h2>
 			<p>Жагсаалт хоосон байсан бол:</p>
-			<p>• Утасны <b>Bluetooth</b> болон <b>Location (Байршил)</b> асаалттай эсэхийг шалга</p>
+			<p>• <b>Bluetooth</b> асаалттай эсэхийг шалга. Android утсан дээр <b>Location (Байршил)</b>-ийг бас асаа</p>
 			<p>• Мэдрэгчид илүү ойрт</p>
 			<p>• Зөвшөөрөл асуувал <b>Allow (Зөвшөөрөх)</b> дар</p>
 		</div>
@@ -149,7 +154,7 @@ summary { cursor: pointer; padding: 6px 0; }
 			<div class="pct" id="pct">0%</div>
 			<div class="bar"><div id="bar"></div></div>
 			<p id="eta">1-2 минут болно</p>
-			<p style="margin-top:10px"><b>Утсаа мэдрэгчийн хажууд байлга.</b></p>
+			<p style="margin-top:10px"><b>Утас эсвэл notebook-оо мэдрэгчийн хажууд байлга.</b></p>
 			<p><b>Хуудсыг бүү хаа, өөр app бүү нээ.</b></p>
 		</div>
 	</section>
@@ -467,22 +472,23 @@ $('b-retry').onclick = retryLast;
 			navigator.bluetooth.getAvailability().then(a => {
 				if(!a) {
 					u.hidden = false;
-					u.innerHTML = '<h2>Bluetooth унтраалттай байна</h2><p>Утасныхаа Bluetooth болон Location-ийг асаагаад хуудсыг дахин ачаална уу.</p>';
+					u.innerHTML = '<h2>Bluetooth олдсонгүй</h2><p>Bluetooth-ээ асаагаад хуудсыг дахин ачаална уу. Android утсан дээр Location-ийг бас асаа.</p>';
 				}
 			}).catch(() => {});
 		return;
 	}
 	const ua = navigator.userAgent;
+	$('devices').hidden = true; // the specific message below replaces it
 	u.hidden = false;
 	$('b-search').disabled = true;
 	if(/iPhone|iPad|iPod/.test(ua)) {
-		u.innerHTML = '<h2>iPhone дээр ажиллахгүй</h2><p>Android утасны Chrome дээр нээнэ үү.</p>';
+		u.innerHTML = '<h2>iPhone дээр ажиллахгүй</h2><p>Android утас эсвэл Windows notebook-ийн Chrome дээр нээнэ үү.</p>';
 	} else if(/Android/.test(ua)) {
 		const url = location.href.replace(/^https?:\/\//, '');
 		u.innerHTML = '<h2>Chrome-оор нээнэ үү</h2><p>Энэ хөтөч Bluetooth дэмждэггүй.</p>'
 			+ '<a class="big" style="text-decoration:none;margin-top:12px" href="intent://' + url + '#Intent;scheme=https;package=com.android.chrome;end">Chrome-оор нээх</a>';
 	} else {
-		u.innerHTML = '<h2>Chrome хөтөч хэрэгтэй</h2><p>Android утасны Chrome дээр нээнэ үү.</p>';
+		u.innerHTML = '<h2>Chrome хөтөч хэрэгтэй</h2><p>Энэ хөтөч Bluetooth дэмждэггүй. Android утас эсвэл Windows notebook-ийн Chrome дээр нээнэ үү.</p>';
 	}
 })();
 </script>
