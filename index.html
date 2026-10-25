@@ -79,6 +79,10 @@ h1 { font-size: 26px; margin: 0 0 6px; }
 	background: var(--card); border: 2px solid var(--accent); color: var(--accent);
 }
 .hint { color: var(--muted); font-size: 16px; margin: 0 0 10px; }
+.note {
+	background: var(--warn-bg); border-radius: 10px; padding: 8px 12px;
+	margin: -12px 0 18px; font-size: 14px; color: var(--muted);
+}
 [hidden] { display: none !important; }
 details { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: left; }
 summary { cursor: pointer; padding: 6px 0; }
@@ -94,10 +98,7 @@ summary { cursor: pointer; padding: 6px 0; }
 	<h1>Мэдрэгч шинэчлэх</h1>
 	<p class="lead">Battery сольсны дараа дата ирэхээ больсон мэдрэгчийг засна</p>
 
-	<div class="panel warn" id="devices">
-		<h2>⚠ Зөвхөн Android утас эсвэл Windows notebook</h2>
-		<p><b>Chrome</b> хөтчөөр нээнэ үү. <b>iPhone дээр ажиллахгүй.</b></p>
-	</div>
+	<p class="note" id="devices">⚠ Зөвхөн <b>Android</b> утас эсвэл <b>Windows</b> notebook-ийн Chrome дээр ажиллана. iPhone дээр ажиллахгүй.</p>
 
 	<div class="panel warn" id="unsupported" hidden></div>
 
