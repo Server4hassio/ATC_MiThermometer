@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мэдрэгч шинэчлэх</title>
+<!--
+  One-button updater for LYWSD03MMC sensors on custom firmware whose settings
+  fell back to defaults (e.g. after a battery change) and stopped sending data.
+  Writes the pvvx advertising setting, then OTA-flashes ATC_viot2, whose
+  defaults are pvvx, so the next reset can't break it again.
+  TelinkMiFlasher.html stays the full tool; this page is for end users.
+-->
+<style>
+:root {
+	--bg: #f5f6f8; --card: #ffffff; --text: #1d2330; --muted: #5d6675;
+	--line: #dde1e7; --accent: #1f6feb; --accent-text: #ffffff;
+	--ok: #1a7f37; --ok-bg: #e6f4ea; --bad: #c62828; --bad-bg: #fdecea;
+	--warn-bg: #fff6e0;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #12151b; --card: #1c2029; --text: #e7eaf0; --muted: #9aa3b2;
+		--line: #2e3440; --accent: #4c8dff; --accent-text: #0b0f17;
+		--ok: #5fd07a; --ok-bg: #16301f; --bad: #ff7b72; --bad-bg: #3a1a1a;
+		--warn-bg: #33290f;
+	}
+}
+* { box-sizing: border-box; }
+body {
+	margin: 0; background: var(--bg); color: var(--text);
+	font: 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 520px; margin: 0 auto; padding: 32px 16px 48px; text-align: center; }
+h1 { font-size: 26px; margin: 0 0 6px; }
+.lead { color: var(--muted); margin: 0 0 28px; font-size: 16px; }
+.big {
+	display: block; width: 100%; padding: 20px; margin: 0 0 14px;
+	font-size: 21px; font-weight: 600; border: 0; border-radius: 16px;
+	background: var(--accent); color: var(--accent-text); cursor: pointer;
+}
+.big.green { background: var(--ok); color: #fff; }
+.big:disabled { opacity: .45; cursor: default; }
+.link {
+	background: none; border: 0; color: var(--accent); font-size: 16px;
+	padding: 10px; cursor: pointer; text-decoration: underline;
+}
+.panel {
+	background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+	padding: 22px 18px; margin: 0 0 16px;
+}
+.panel.ok { background: var(--ok-bg); border-color: transparent; }
+.panel.bad { background: var(--bad-bg); border-color: transparent; }
+.panel.warn { background: var(--warn-bg); border-color: transparent; }
+.panel h2 { font-size: 21px; margin: 0 0 6px; }
+.panel.ok h2 { color: var(--ok); }
+.panel.bad h2 { color: var(--bad); }
+.panel p { margin: 4px 0; color: var(--muted); font-size: 16px; }
+.dev { font-size: 22px; font-weight: 700; margin: 2px 0 4px; }
+.spin {
+	width: 40px; height: 40px; margin: 4px auto 12px; border-radius: 50%;
+	border: 4px solid var(--line); border-top-color: var(--accent);
+	animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.bar { height: 14px; background: var(--line); border-radius: 7px; margin: 14px 0 6px; overflow: hidden; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.pct { font-size: 28px; font-weight: 700; }
+[hidden] { display: none !important; }
+details { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: left; }
+summary { cursor: pointer; padding: 6px 0; }
+#log {
+	white-space: pre-wrap; word-break: break-word; font: 12px/1.4 ui-monospace, monospace;
+	background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+	padding: 10px; max-height: 260px; overflow: auto; margin: 6px 0 0;
+}
+</style>
+</head>
+<body>
+<main>
+	<h1>Мэдрэгч шинэчлэх</h1>
+	<p class="lead">Battery сольсны дараа дата ирэхээ больсон мэдрэгчийг засна</p>
+
+	<div class="panel warn" id="unsupported" hidden></div>
+
+	<!-- one view at a time, switched by show() -->
+	<section id="v-start">
+		<button class="big" id="b-search" type="button">Bluetooth мэдрэгч хайх</button>
+	</section>
+
+	<section id="v-pick" hidden>
+		<div class="panel">
+			<div class="spin"></div>
+			<h2>ATC мэдрэгчээ сонгоно уу</h2>
+			<p>Жагсаалтаас <b>ATC_</b> гэж эхэлсэн нэрийг сонгоод <b>Pair</b> дарна уу</p>
+		</div>
+	</section>
+
+	<section id="v-connect" hidden>
+		<div class="panel">
+			<div class="spin"></div>
+			<h2>Холбогдож байна...</h2>
+			<p class="dev" id="connect-name"></p>
+		</div>
+	</section>
+
+	<section id="v-found" hidden>
+		<div class="panel">
+			<h2>Мэдрэгч олдлоо</h2>
+			<p class="dev" id="found-name"></p>
+			<p id="found-ver"></p>
+		</div>
+		<button class="big green" id="b-update" type="button">Шинэчлэх</button>
+		<button class="link" id="b-other" type="button">Өөр мэдрэгч хайх</button>
+	</section>
+
+	<section id="v-flash" hidden>
+		<div class="panel">
+			<div class="spin"></div>
+			<h2>Суулгаж байна, түр хүлээнэ үү</h2>
+			<div class="pct" id="pct">0%</div>
+			<div class="bar"><div id="bar"></div></div>
+			<p>Утсаа мэдрэгчийн хажууд байлгаж, хуудсыг бүү хаагаарай</p>
+		</div>
+	</section>
+
+	<section id="v-done" hidden>
+		<div class="panel ok">
+			<h2>Амжилттай!</h2>
+			<p>Мэдрэгч өөрөө дахин асна. 1-2 минутын дотор дата ирж эхэлнэ.</p>
+		</div>
+		<button class="big" id="b-next" type="button">Дараагийн мэдрэгч хайх</button>
+	</section>
+
+	<section id="v-error" hidden>
+		<div class="panel bad">
+			<h2>Алдаа гарлаа</h2>
+			<p id="err-text">Мэдрэгчид ойртоод дахин оролдоно уу.</p>
+		</div>
+		<button class="big" id="b-retry" type="button">Дахин оролдох</button>
+	</section>
+
+	<details>
+		<summary>Дэлгэрэнгүй log</summary>
+		<pre id="log"></pre>
+	</details>
+</main>
+
+<script>
+'use strict';
+const OTA_SVC = '00010203-0405-0607-0809-0a0b0c0d1912';
+const OTA_CHR = '00010203-0405-0607-0809-0a0b0c0d2b12';
+const CFG_SVC = 0x1f10, CFG_CHR = 0x1f1f;
+const DIS_SVC = 0x180a, DIS_MODEL = 0x2a24, DIS_SOFT = 0x2a28;
+const FW_URL = 'bin/ATC_viot2.bin';
+const FW_MODEL = 'LYWSD03MMC';
+const MAX_OTA_SIZE = 0x20000;
+// cmd 0x55 copies its payload over the start of the config; byte 0 = 0x85
+// selects pvvx advertising (bits 0-1 = 1) — the same write sent from Tasmota.
+// Sent before flashing so the sensor is fixed even if the OTA doesn't finish,
+// and so a sensor already on 5.9 (no factory reset on update) ends up on pvvx.
+const CFG_PVVX = [0x55, 0x85];
+
+const $ = id => document.getElementById(id);
+let device = null, server = null, otaChr = null, cfgChr = null;
+let busy = false, wakeLock = null;
+let found = false; // the connected sensor passed the checks and can be updated
+
+function log(s) {
+	const t = new Date().toLocaleTimeString();
+	$('log').textContent += t + '  ' + s + '\n';
+	console.log(s);
+}
+
+function show(view) {
+	document.querySelectorAll('main > section').forEach(s => s.hidden = s.id != 'v-' + view);
+}
+
+function fail(text) {
+	$('err-text').textContent = text || 'Мэдрэгчид ойртоод дахин оролдоно уу.';
+	show('error');
+	notify(false);
+}
+
+// Beep + vibrate so a batch of sensors can be done without watching the screen.
+function notify(ok) {
+	try { if(navigator.vibrate) navigator.vibrate(ok ? 200 : [120, 90, 120]); } catch(e) {}
+	try {
+		const Ctx = window.AudioContext || window.webkitAudioContext;
+		if(!Ctx) return;
+		const ctx = new Ctx(), osc = ctx.createOscillator(), gain = ctx.createGain();
+		osc.connect(gain); gain.connect(ctx.destination);
+		gain.gain.value = 0.2;
+		osc.frequency.value = ok ? 880 : 300;
+		osc.start();
+		setTimeout(() => { try { osc.stop(); ctx.close(); } catch(e) {} }, ok ? 180 : 450);
+	} catch(e) {}
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// GATT calls on some phones fail once and then work — retry a few times.
+async function retry(fn, tries, what) {
+	for(let i = 1; ; i++) {
+		try { return await fn(); }
+		catch(e) {
+			if(e && e.name == 'NotFoundError') throw e; // not there at all, don't retry
+			log(what + ' failed (' + i + '/' + tries + '): ' + e);
+			if(i >= tries) throw e;
+			await sleep(700);
+		}
+	}
+}
+
+async function readStr(svc, uuid) {
+	try {
+		const c = await svc.getCharacteristic(uuid);
+		const v = await c.readValue();
+		return new TextDecoder().decode(v.buffer).replace(/\0+$/, '').trim();
+	} catch(e) { return ''; }
+}
+
+function disconnect() {
+	try { if(device && device.gatt.connected) device.gatt.disconnect(); } catch(e) {}
+}
+
+// --- step 1: pick and connect --------------------------------------------
+
+async function search() {
+	if(busy) return;
+	busy = true;
+	disconnect();
+	show('pick');
+	try {
+		try {
+			device = await navigator.bluetooth.requestDevice({
+				filters: [{ namePrefix: 'ATC' }],
+				optionalServices: [CFG_SVC, OTA_SVC, DIS_SVC]
+			});
+		} catch(e) {
+			log('requestDevice: ' + e);
+			// NotFoundError is also what a cancelled chooser gives
+			show('start');
+			return;
+		}
+		log('Selected ' + device.name);
+		await connect();
+	} finally {
+		busy = false;
+	}
+}
+
+async function connect() {
+	show('connect');
+	$('connect-name').textContent = device.name || '';
+	otaChr = cfgChr = null;
+	found = false;
+	try {
+		server = await retry(() => device.gatt.connect(), 3, 'connect');
+		await sleep(300);
+		log('Connected');
+		// Warm-up: one service + characteristic fetch before anything else,
+		// as TelinkMiFlasher does — some adapters fail without it.
+		try {
+			const s = await retry(() => server.getPrimaryService(OTA_SVC), 3, 'OTA service');
+			otaChr = await retry(() => s.getCharacteristic(OTA_CHR), 3, 'OTA characteristic');
+		} catch(e) { log('OTA service: ' + e); }
+		try {
+			const s = await retry(() => server.getPrimaryService(CFG_SVC), 3, 'config service');
+			cfgChr = await retry(() => s.getCharacteristic(CFG_CHR), 3, 'config characteristic');
+		} catch(e) { log('Config service: ' + e); }
+	} catch(e) {
+		log('Connect: ' + e);
+		fail('Мэдрэгчтэй холбогдож чадсангүй. Мэдрэгчид ойртоод дахин оролдоно уу.');
+		return false;
+	}
+
+	let model = '', soft = '';
+	try {
+		const d = await retry(() => server.getPrimaryService(DIS_SVC), 2, 'device info');
+		model = await readStr(d, DIS_MODEL);
+		soft = await readStr(d, DIS_SOFT);
+	} catch(e) { log('Device info: ' + e); }
+	log('Model: "' + model + '", software: "' + soft + '", ota: ' + !!otaChr + ', cfg: ' + !!cfgChr);
+
+	// Only flash hardware the build is for, and only over custom firmware.
+	if(!cfgChr || !otaChr || model != FW_MODEL) {
+		disconnect();
+		fail('Энэ мэдрэгчийг энэ хуудсаар шинэчлэх боломжгүй. Өөр мэдрэгч сонгоно уу.');
+		return false;
+	}
+	$('found-name').textContent = device.name || '';
+	$('found-ver').textContent = soft ? 'Одоогийн програм: ' + soft : '';
+	found = true;
+	show('found');
+	return true;
+}
+
+// --- step 2: update --------------------------------------------------------
+
+async function loadFirmware() {
+	const r = await fetch(FW_URL, { cache: 'no-cache' });
+	if(!r.ok) throw new Error('HTTP ' + r.status);
+	const buf = new Uint8Array(await r.arrayBuffer());
+	if(buf.length < 1024 || buf.length > MAX_OTA_SIZE) throw new Error('bad size ' + buf.length);
+	const len = Math.ceil(buf.length / 16) * 16;
+	const fw = new Uint8Array(len).fill(0xff);
+	fw.set(buf);
+	log('Firmware ' + FW_URL + ': ' + buf.length + ' bytes, ' + (len / 16) + ' blocks');
+	return fw;
+}
+
+function crc16(buf, n) {
+	let crc = 0xffff;
+	for(let i = 0; i < n; i++) {
+		crc ^= buf[i];
+		for(let j = 0; j < 8; j++) crc = (crc & 1) ? (crc >> 1) ^ 0xa001 : crc >> 1;
+	}
+	return crc;
+}
+
+function progress(p) {
+	$('pct').textContent = p + '%';
+	$('bar').style.width = p + '%';
+}
+
+// Telink OTA, same framing as TelinkMiFlasher: 0xff00/0xff01 start, then
+// [index LE][16 bytes][crc16 LE] blocks, status read every 8 blocks, and
+// 0xff02 with the last index and its complement to finish.
+async function flash(chr, fw) {
+	const blocks = fw.length / 16;
+	await sleep(500);
+	await chr.writeValue(new Uint8Array([0x00, 0xff]));
+	await chr.writeValue(new Uint8Array([0x01, 0xff]));
+	await sleep(300);
+	const t0 = Date.now();
+	const pkt = new Uint8Array(20);
+	for(let i = 0; i < blocks; i++) {
+		pkt[0] = i & 0xff; pkt[1] = (i >> 8) & 0xff;
+		pkt.set(fw.subarray(i * 16, i * 16 + 16), 2);
+		const crc = crc16(pkt, 18);
+		pkt[18] = crc & 0xff; pkt[19] = (crc >> 8) & 0xff;
+		await chr.writeValue(pkt);
+		if((i + 1) % 8 == 0) {
+			const st = await chr.readValue();
+			if(st.byteLength > 0 && st.getUint8(0) != 0)
+				throw new Error('OTA status ' + st.getUint8(0) + ' at block ' + i);
+		}
+		if(i % 16 == 0 || i == blocks - 1) progress(Math.floor((i + 1) * 100 / blocks));
+	}
+	const last = blocks - 1, inv = ~last & 0xffff;
+	await chr.writeValue(new Uint8Array([0x02, 0xff, last & 0xff, last >> 8, inv & 0xff, inv >> 8]));
+	log('OTA sent ' + blocks + ' blocks in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
+}
+
+async function update() {
+	if(busy) return;
+	busy = true;
+	progress(0);
+	show('flash');
+	try { if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+	try {
+		if(!device.gatt.connected) {
+			log('Reconnecting before update');
+			if(!await connect()) return;
+			show('flash');
+		}
+		let fw;
+		try { fw = await loadFirmware(); }
+		catch(e) {
+			log('Firmware load: ' + e);
+			fail('Програмыг татаж чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.');
+			return;
+		}
+		await retry(() => cfgChr.writeValue(new Uint8Array(CFG_PVVX)), 3, 'config write');
+		log('Config written (pvvx advertising)');
+		await flash(otaChr, fw);
+		progress(100);
+		show('done');
+		notify(true);
+		// the sensor reboots into the new firmware on its own; drop the link
+		setTimeout(disconnect, 500);
+	} catch(e) {
+		log('Update: ' + e);
+		disconnect();
+		fail('Мэдрэгчид ойртоод дахин оролдоно уу.');
+	} finally {
+		busy = false;
+		try { if(wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e) {}
+	}
+}
+
+// "Retry" goes back to whichever step failed: update if a sensor was found,
+// otherwise a fresh search.
+async function retryLast() {
+	if(device && found) {
+		update();
+	} else {
+		search();
+	}
+}
+
+window.addEventListener('beforeunload', e => {
+	if(busy) { e.preventDefault(); e.returnValue = ''; }
+});
+
+$('b-search').onclick = search;
+$('b-other').onclick = search;
+$('b-next').onclick = () => { device = null; found = false; search(); };
+$('b-update').onclick = update;
+$('b-retry').onclick = retryLast;
+
+// Web Bluetooth only exists in Chrome-family browsers; links opened from
+// Messenger/Facebook land in an in-app browser without it.
+(function checkSupport() {
+	const u = $('unsupported');
+	if(navigator.bluetooth) {
+		if(navigator.bluetooth.getAvailability)
+			navigator.bluetooth.getAvailability().then(a => {
+				if(!a) {
+					u.hidden = false;
+					u.innerHTML = '<h2>Bluetooth унтраалттай байна</h2><p>Утасныхаа Bluetooth болон Location-ийг асаагаад хуудсыг дахин ачаална уу.</p>';
+				}
+			}).catch(() => {});
+		return;
+	}
+	const ua = navigator.userAgent;
+	u.hidden = false;
+	$('b-search').disabled = true;
+	if(/iPhone|iPad|iPod/.test(ua)) {
+		u.innerHTML = '<h2>iPhone дээр ажиллахгүй</h2><p>Android утасны Chrome дээр нээнэ үү.</p>';
+	} else if(/Android/.test(ua)) {
+		const url = location.href.replace(/^https?:\/\//, '');
+		u.innerHTML = '<h2>Chrome-оор нээнэ үү</h2><p>Энэ хөтөч Bluetooth дэмждэггүй.</p>'
+			+ '<a class="big" style="text-decoration:none;margin-top:12px" href="intent://' + url + '#Intent;scheme=https;package=com.android.chrome;end">Chrome-оор нээх</a>';
+	} else {
+		u.innerHTML = '<h2>Chrome хөтөч хэрэгтэй</h2><p>Android утасны Chrome дээр нээнэ үү.</p>';
+	}
+})();
+</script>
+</body>
+</html>

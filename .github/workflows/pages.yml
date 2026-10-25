@@ -30,7 +30,7 @@ jobs:
       - name: Stage flasher files
         run: |
           mkdir -p _site
-          cp TelinkMiFlasher.html core.js styles.css firmware.json _site/
+          cp index.html TelinkMiFlasher.html core.js styles.css firmware.json _site/
           cp -r bin signfiles _site/
           find _site -type f | sort
 
