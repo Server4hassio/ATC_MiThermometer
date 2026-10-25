@@ -66,6 +66,19 @@ h1 { font-size: 26px; margin: 0 0 6px; }
 .bar { height: 14px; background: var(--line); border-radius: 7px; margin: 14px 0 6px; overflow: hidden; }
 .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 .pct { font-size: 28px; font-weight: 700; }
+.howto {
+	text-align: left; margin: 0 0 20px; padding: 0; list-style: none; counter-reset: n;
+}
+.howto li {
+	counter-increment: n; display: flex; align-items: center; gap: 12px;
+	padding: 10px 0; font-size: 18px;
+}
+.howto li::before {
+	content: counter(n); flex: none; width: 34px; height: 34px; border-radius: 50%;
+	display: grid; place-items: center; font-weight: 700;
+	background: var(--card); border: 2px solid var(--accent); color: var(--accent);
+}
+.hint { color: var(--muted); font-size: 16px; margin: 0 0 10px; }
 [hidden] { display: none !important; }
 details { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: left; }
 summary { cursor: pointer; padding: 6px 0; }
@@ -85,6 +98,18 @@ summary { cursor: pointer; padding: 6px 0; }
 
 	<!-- one view at a time, switched by show() -->
 	<section id="v-start">
+		<ol class="howto">
+			<li><span>Утасныхаа <b>Bluetooth</b>-ийг асаа</span></li>
+			<li><span>Мэдрэгчийн <b>хажууд</b> оч</span></li>
+			<li><span>Доорх цэнхэр товчийг дар</span></li>
+		</ol>
+		<div class="panel warn" id="nothing" style="text-align:left" hidden>
+			<h2>Мэдрэгч сонгогдсонгүй</h2>
+			<p>Жагсаалт хоосон байсан бол:</p>
+			<p>• Утасны <b>Bluetooth</b> болон <b>Location (Байршил)</b> асаалттай эсэхийг шалга</p>
+			<p>• Мэдрэгчид илүү ойрт</p>
+			<p>• Зөвшөөрөл асуувал <b>Allow (Зөвшөөрөх)</b> дар</p>
+		</div>
 		<button class="big" id="b-search" type="button">Bluetooth мэдрэгч хайх</button>
 	</section>
 
@@ -92,7 +117,9 @@ summary { cursor: pointer; padding: 6px 0; }
 		<div class="panel">
 			<div class="spin"></div>
 			<h2>ATC мэдрэгчээ сонгоно уу</h2>
-			<p>Жагсаалтаас <b>ATC_</b> гэж эхэлсэн нэрийг сонгоод <b>Pair</b> дарна уу</p>
+			<p>Гарч ирсэн жагсаалтаас <b>ATC_</b> гэж эхэлсэн нэр дээр дар.</p>
+			<p>Дараа нь <b>Pair</b> (эсвэл <b>Холбох</b>) товчийг дар.</p>
+			<p style="margin-top:10px">Хэд хэдэн ATC_ байвал аль нэгийг нь сонго. Бүгдийг нь нэг нэгээр шинэчилж болно.</p>
 		</div>
 	</section>
 
@@ -110,6 +137,7 @@ summary { cursor: pointer; padding: 6px 0; }
 			<p class="dev" id="found-name"></p>
 			<p id="found-ver"></p>
 		</div>
+		<p class="hint">Ногоон товчийг дар. 1-2 минут болно.</p>
 		<button class="big green" id="b-update" type="button">Шинэчлэх</button>
 		<button class="link" id="b-other" type="button">Өөр мэдрэгч хайх</button>
 	</section>
@@ -120,15 +148,20 @@ summary { cursor: pointer; padding: 6px 0; }
 			<h2>Суулгаж байна, түр хүлээнэ үү</h2>
 			<div class="pct" id="pct">0%</div>
 			<div class="bar"><div id="bar"></div></div>
-			<p>Утсаа мэдрэгчийн хажууд байлгаж, хуудсыг бүү хаагаарай</p>
+			<p id="eta">1-2 минут болно</p>
+			<p style="margin-top:10px"><b>Утсаа мэдрэгчийн хажууд байлга.</b></p>
+			<p><b>Хуудсыг бүү хаа, өөр app бүү нээ.</b></p>
 		</div>
 	</section>
 
 	<section id="v-done" hidden>
 		<div class="panel ok">
 			<h2>Амжилттай!</h2>
-			<p>Мэдрэгч өөрөө дахин асна. 1-2 минутын дотор дата ирж эхэлнэ.</p>
+			<p class="dev" id="done-name"></p>
+			<p>Мэдрэгч өөрөө дахин асна. Дэлгэц нь хэдэн секунд унтарч болно, энэ хэвийн.</p>
+			<p>1-2 минутын дотор дата ирж эхэлнэ.</p>
 		</div>
+		<p class="hint">Өөр мэдрэгч байвал түүний хажууд очоод доорх товчийг дар.</p>
 		<button class="big" id="b-next" type="button">Дараагийн мэдрэгч хайх</button>
 	</section>
 
@@ -230,6 +263,7 @@ async function search() {
 	if(busy) return;
 	busy = true;
 	disconnect();
+	$('nothing').hidden = true;
 	show('pick');
 	try {
 		try {
@@ -239,7 +273,9 @@ async function search() {
 			});
 		} catch(e) {
 			log('requestDevice: ' + e);
-			// NotFoundError is also what a cancelled chooser gives
+			// NotFoundError is also what a cancelled chooser gives; either way
+			// show what to check before trying again.
+			$('nothing').hidden = false;
 			show('start');
 			return;
 		}
@@ -346,7 +382,15 @@ async function flash(chr, fw) {
 			if(st.byteLength > 0 && st.getUint8(0) != 0)
 				throw new Error('OTA status ' + st.getUint8(0) + ' at block ' + i);
 		}
-		if(i % 16 == 0 || i == blocks - 1) progress(Math.floor((i + 1) * 100 / blocks));
+		if(i % 16 == 0 || i == blocks - 1) {
+			progress(Math.floor((i + 1) * 100 / blocks));
+			if(i >= 64) {
+				const left = Math.ceil((Date.now() - t0) / (i + 1) * (blocks - i - 1) / 1000);
+				$('eta').textContent = left > 60
+					? 'Үлдсэн хугацаа: ' + Math.ceil(left / 60) + ' минут орчим'
+					: 'Үлдсэн хугацаа: ' + left + ' секунд';
+			}
+		}
 	}
 	const last = blocks - 1, inv = ~last & 0xffff;
 	await chr.writeValue(new Uint8Array([0x02, 0xff, last & 0xff, last >> 8, inv & 0xff, inv >> 8]));
@@ -357,6 +401,7 @@ async function update() {
 	if(busy) return;
 	busy = true;
 	progress(0);
+	$('eta').textContent = '1-2 минут болно';
 	show('flash');
 	try { if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
 	try {
@@ -376,6 +421,7 @@ async function update() {
 		log('Config written (pvvx advertising)');
 		await flash(otaChr, fw);
 		progress(100);
+		$('done-name').textContent = device.name || '';
 		show('done');
 		notify(true);
 		// the sensor reboots into the new firmware on its own; drop the link
@@ -383,7 +429,9 @@ async function update() {
 	} catch(e) {
 		log('Update: ' + e);
 		disconnect();
-		fail('Мэдрэгчид ойртоод дахин оролдоно уу.');
+		// An unfinished Telink OTA never replaces the running firmware, so
+		// the sensor is fine — say so, people worry they broke it.
+		fail('Холболт тасарлаа. Мэдрэгч эвдрээгүй. Мэдрэгчид ойртоод "Дахин оролдох" товчийг дар.');
 	} finally {
 		busy = false;
 		try { if(wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e) {}
